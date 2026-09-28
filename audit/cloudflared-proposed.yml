@@ -1,0 +1,17 @@
+tunnel: stb-server
+credentials-file: /root/.cloudflared/6dbdc78e-6c29-41d0-8227-daa1b71d436f.json
+
+ingress:
+  - hostname: arnur.id
+    service: http://localhost:80
+
+  - hostname: mqtt.arnur.id
+    service: http://localhost:9001
+
+  - hostname: hydroflow.arnur.id
+    service: http://localhost:8091
+
+  - hostname: std.arnur.id
+    service: http://localhost:8765
+
+  - service: http_status:404

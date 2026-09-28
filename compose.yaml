@@ -17,6 +17,7 @@ services:
       - ./templates:/app/templates:ro
       - ./static:/app/static:ro
       - ./logo-hsm.svg:/app/logo-hsm.svg:ro
+      - ./google195041c754aa4836.html:/app/google195041c754aa4836.html:ro
     read_only: true
     tmpfs:
       - /tmp:size=24m,mode=1777

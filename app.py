@@ -10,11 +10,21 @@ from functools import wraps
 from pathlib import Path
 from urllib.parse import quote, urlsplit, parse_qs
 
-from flask import Flask, abort, flash, g, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, Response, abort, flash, g, redirect, render_template, request, send_from_directory, session, url_for
 from PIL import Image, ImageOps, UnidentifiedImageError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 ROOT = Path(__file__).parent
+# Use a configured public origin, never an untrusted incoming Host header.
+PUBLIC_SITE_URL = os.environ.get('PUBLIC_SITE_URL', 'https://hydroflow.arnur.id').rstrip('/')
+_public_origin = urlsplit(PUBLIC_SITE_URL)
+if (_public_origin.scheme != 'https' or not _public_origin.hostname or
+        _public_origin.username or _public_origin.password or _public_origin.path or
+        _public_origin.query or _public_origin.fragment):
+    raise RuntimeError('PUBLIC_SITE_URL must be an HTTPS origin without a path.')
+SEO_TITLE = 'Hydroflow | Monitoring Air IoT & Kualitas Air Realtime'
+SEO_DESCRIPTION = ('Pantau penggunaan, kualitas, dan level air secara realtime dengan Hydroflow. '
+                   'Satu dashboard IoT untuk banyak perangkat, alarm, dan histori data air.')
 DATA = Path(os.environ.get('DATA_DIR', ROOT / 'data'))
 DATA.mkdir(parents=True, exist_ok=True)
 UPLOADS = DATA / 'uploads'
@@ -110,6 +120,9 @@ def headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     if request.path.startswith('/admin'):
         response.headers['Cache-Control'] = 'no-store'
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    elif request.path == '/healthz' or response.status_code >= 400:
+        response.headers['X-Robots-Tag'] = 'noindex'
     return response
 
 def admin_required(fn):
@@ -137,9 +150,54 @@ def landing():
         count = 1 if len(columns) % 3 == 0 else 2
         columns.append(photos[i:i+count])
         i += count
+    canonical_url = PUBLIC_SITE_URL + '/'
+    organization_id = canonical_url + '#organization'
+    website_id = canonical_url + '#website'
+    logo_url = PUBLIC_SITE_URL + config['logo']
+    structured_data = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {'@type': 'Organization', '@id': organization_id, 'name': 'Arnur Tech',
+             'url': canonical_url, 'logo': logo_url, 'email': config['email'],
+             'telephone': config['phone']},
+            {'@type': 'WebSite', '@id': website_id, 'name': 'Hydroflow',
+             'alternateName': 'Hydroflow by Arnur Tech', 'url': canonical_url,
+             'inLanguage': 'id-ID', 'publisher': {'@id': organization_id}},
+            {'@type': 'WebPage', '@id': canonical_url + '#webpage',
+             'url': canonical_url, 'name': SEO_TITLE, 'description': SEO_DESCRIPTION,
+             'inLanguage': 'id-ID', 'isPartOf': {'@id': website_id},
+             'about': {'@id': canonical_url + '#service'}},
+            {'@type': 'Service', '@id': canonical_url + '#service',
+             'name': 'Hydroflow — Sistem Monitoring Air IoT', 'url': canonical_url,
+             'serviceType': 'Monitoring penggunaan, kualitas, dan level air berbasis IoT',
+             'description': SEO_DESCRIPTION, 'provider': {'@id': organization_id}}
+        ]
+    }
     return render_template('landing.html', config=config, columns=columns, demo_embed_url=demo_embed_url,
+                           seo_title=SEO_TITLE, seo_description=SEO_DESCRIPTION,
+                           canonical_url=canonical_url, structured_data=structured_data,
+                           social_image=logo_url if config['logo'].startswith('/uploads/') else '',
                            whatsapp_url='https://wa.me/' + config['whatsapp'] + '?text=' + quote(config['message']),
                            phone_href=re.sub(r'[^+0-9]', '', config['phone']))
+
+@app.get('/robots.txt')
+def robots():
+    # Admin stays crawlable so search engines can read its noindex directive.
+    # Authentication still protects all management content and operations.
+    return Response('User-agent: *\nAllow: /\n\nSitemap: ' + PUBLIC_SITE_URL + '/sitemap.xml\n',
+                    mimetype='text/plain', headers={'Cache-Control': 'public, max-age=3600'})
+
+@app.get('/sitemap.xml')
+def sitemap():
+    return Response(render_template('sitemap.xml', canonical_url=PUBLIC_SITE_URL + '/'),
+                    mimetype='application/xml', headers={'Cache-Control': 'public, max-age=3600'})
+
+
+@app.get('/google195041c754aa4836.html')
+def google_site_verification():
+    # Serve only the uploaded verification file; never expose the project root.
+    return send_from_directory(ROOT, 'google195041c754aa4836.html', mimetype='text/html')
+
 
 @app.get('/logo-hsm.svg')
 def original_logo():

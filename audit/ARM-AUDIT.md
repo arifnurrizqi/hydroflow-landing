@@ -100,3 +100,16 @@ browser download, or tunnel change was performed.
 References consulted:
 - https://docs.docker.com/engine/containers/resource_constraints/
 - https://pillow.readthedocs.io/en/stable/reference/Image.html
+
+## Public tunnel cutover — 2026-09-28
+
+At the user's subsequent request, changed only `hydroflow.arnur.id` from port
+8080 to 8091 in `/etc/cloudflared/config.yml`. Configuration was validated and
+cloudflared was restarted successfully; no application container was restarted.
+Backup: `/etc/cloudflared/config.yml.backup-20260928T131212Z`.
+
+Public HTTPS checks with curl confirmed the expected CMS landing page, admin login
+(via `/admin` redirect), and health response. Python urllib initially received a
+403 while curl received 200; no Cloudflare security settings were changed.
+The other ingress routes were retained. The old dashboard hostname migration is
+not included in this cutover because its application is not currently running.

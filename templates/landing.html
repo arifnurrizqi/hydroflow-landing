@@ -3,9 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Hydroflow adalah sistem monitoring penggunaan dan kualitas air berbasis IoT. Pantau banyak perangkat, alarm, histori, dan datalogger dari satu dashboard.">
+    <title>{{ seo_title }}</title>
+    <meta name="description" content="{{ seo_description }}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="theme-color" content="#071b2e">
-    <title>Hydroflow — IoT Water Monitoring by Arnur Tech</title>
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Hydroflow">
+    <meta property="og:locale" content="id_ID">
+    <meta property="og:title" content="{{ seo_title }}">
+    <meta property="og:description" content="{{ seo_description }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ seo_title }}">
+    <meta name="twitter:description" content="{{ seo_description }}">
+    {% if social_image %}
+    <meta property="og:image" content="{{ social_image }}">
+    <meta property="og:image:alt" content="Logo Hydroflow">
+    <meta name="twitter:image" content="{{ social_image }}">
+    <meta name="twitter:image:alt" content="Logo Hydroflow">
+    {% endif %}
+    <script type="application/ld+json">{{ structured_data|tojson }}</script>
     <link rel="icon" href="{{ config.logo }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -100,7 +118,7 @@
     <header class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-ink/95 text-white backdrop-blur">
         <nav class="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 py-4 lg:px-8" aria-label="Navigasi utama">
             <a href="#beranda" class="flex items-center gap-3" aria-label="Hydroflow beranda">
-                <img src="{{ config.logo }}" alt="" class="h-11 w-11 rounded-xl object-cover" width="44" height="44">
+                <img src="{{ config.logo }}" alt="Logo Hydroflow" class="h-11 w-11 rounded-xl object-cover" width="44" height="44">
                 <span>
                     <span class="block font-display text-[17px] font-extrabold leading-none tracking-[.08em]">HYDROFLOW</span>
                     <span class="mt-1 block text-[9px] font-semibold uppercase tracking-[.24em] text-slate-400">by Arnur Tech</span>
@@ -143,7 +161,7 @@
                         IoT water monitoring system
                     </div>
                     <h1 class="max-w-xl font-display text-4xl font-extrabold leading-[1.08] tracking-[-.035em] sm:text-5xl lg:text-[64px]">
-                        Data air yang bisa langsung ditindaklanjuti.
+                        Monitoring air berbasis IoT, lebih jelas dan terukur.
                     </h1>
                     <p class="mt-6 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
                         Hydroflow menyatukan pemantauan penggunaan, kualitas, dan level air dalam satu dashboard. Akses kondisi perangkat dari mana saja, kapan saja—tanpa menunggu pencatatan manual.
@@ -259,7 +277,7 @@
             <div class="mx-auto max-w-7xl px-5 lg:px-8">
                 <div class="max-w-2xl">
                     <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Kemampuan sistem</p>
-                    <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Satu sumber data untuk operasional air.</h2>
+                    <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Fitur monitoring penggunaan dan kualitas air.</h2>
                     <p class="mt-5 text-base leading-8 text-slate-500">Dirancang untuk menjawab kebutuhan monitoring harian, investigasi data, dan pengelolaan lebih dari satu perangkat.</p>
                 </div>
 
@@ -401,7 +419,7 @@
                 <div class="grid gap-10 lg:grid-cols-[.7fr_1.3fr]">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Penerapan</p>
-                        <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Fleksibel untuk berbagai titik air.</h2>
+                        <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Monitoring air untuk gedung dan berbagai lokasi.</h2>
                         <p class="mt-5 text-sm leading-7 text-slate-500">Konfigurasi perangkat, parameter, dan jaringan dapat disesuaikan dengan kebutuhan lokasi.</p>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -470,6 +488,36 @@
                         <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> API telemetry</p>
                         <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Role pengguna</p>
                         <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Backup data</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="faq" class="border-t border-line bg-paper py-20 lg:py-28" aria-labelledby="faq-heading">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <div class="grid gap-10 lg:grid-cols-[.7fr_1.3fr]">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Pertanyaan umum</p>
+                        <h2 id="faq-heading" class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Mengenal sistem monitoring air Hydroflow.</h2>
+                        <p class="mt-5 text-sm leading-7 text-slate-500">Pahami cara kerja, kebutuhan sensor, dan penerapan sebelum menentukan sistem untuk lokasi Anda.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <details class="rounded-2xl border border-line bg-white p-6" open>
+                            <summary class="cursor-pointer font-display text-lg font-bold text-ink">Apa itu Hydroflow?</summary>
+                            <p class="mt-3 text-sm leading-7 text-slate-600">Hydroflow adalah sistem monitoring air berbasis Internet of Things (IoT) dari Arnur Tech. Data penggunaan, kualitas, dan level air dari perangkat di lapangan ditampilkan dalam satu dashboard untuk membantu tim memantau kondisi dan meninjau histori.</p>
+                        </details>
+                        <details class="rounded-2xl border border-line bg-white p-6">
+                            <summary class="cursor-pointer font-display text-lg font-bold text-ink">Apa saja yang bisa dipantau?</summary>
+                            <p class="mt-3 text-sm leading-7 text-slate-600">Sistem dapat memantau penggunaan air melalui flow meter, level air pada tandon, serta parameter kualitas air sesuai sensor yang dipasang. Parameter, interval pengiriman data, dan ambang alarm disesuaikan dengan konfigurasi instalasi.</p>
+                        </details>
+                        <details class="rounded-2xl border border-line bg-white p-6">
+                            <summary class="cursor-pointer font-display text-lg font-bold text-ink">Apakah bisa untuk banyak perangkat dan lokasi?</summary>
+                            <p class="mt-3 text-sm leading-7 text-slate-600">Hydroflow menyatukan pemantauan beberapa perangkat dalam satu dashboard. Penerapannya mencakup tandon gedung, fasilitas multi-lokasi, dan utilitas proses. Kebutuhan jaringan dan jumlah perangkat dibahas sesuai kondisi lapangan.</p>
+                        </details>
+                        <details class="rounded-2xl border border-line bg-white p-6">
+                            <summary class="cursor-pointer font-display text-lg font-bold text-ink">Bagaimana memulai pemasangan Hydroflow?</summary>
+                            <p class="mt-3 text-sm leading-7 text-slate-600">Sampaikan titik air yang ingin dipantau, parameter yang dibutuhkan, dan kondisi jaringan kepada Arnur Tech. Tim dapat membantu membahas sensor, dashboard, dan pilihan penempatan server. <a href="#kontak" class="font-semibold text-ocean underline">Konsultasikan kebutuhan monitoring air Anda.</a></p>
+                        </details>
                     </div>
                 </div>
             </div>

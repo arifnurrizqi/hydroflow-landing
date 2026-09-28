@@ -105,3 +105,43 @@ docker load -i hydroflow-cms-arm64.tar
 Do not use `compose.build.yaml` on the constrained server. Runtime Compose limits
 do not automatically constrain builds or host npm/browser installer processes.
 See `audit/ARM-AUDIT.md` for measured results and remaining uncertainty.
+
+## SEO and search indexing
+
+The live page renders its title, Indonesian description, canonical URL, Open Graph /
+Twitter metadata, and Organization/WebSite/WebPage/Service JSON-LD on the server.
+Structured contact data and uploaded-logo references follow CMS settings. The
+public origin defaults to `https://hydroflow.arnur.id` and can be configured with
+`PUBLIC_SITE_URL`; incoming Host headers and tracking queries do not alter it.
+
+- `/sitemap.xml` lists only the canonical public landing page.
+- `/robots.txt` allows crawling and advertises the sitemap.
+- Every `/admin` response, including redirects and errors, sends
+  `X-Robots-Tag: noindex, nofollow`; admin HTML also has a noindex meta tag.
+- Admin content and operations still require login. No admin links appear in the
+  public landing page or sitemap. `noindex` controls search visibility, not access.
+- Do not add `Disallow: /admin` to robots.txt: Google must be able to crawl the
+  login response to see noindex. Health and error responses are also noindex.
+- A visible FAQ explains actual supported uses. No fabricated ratings, prices,
+  customer counts, or guaranteed search ranking are included.
+
+After deployment, verify `https://hydroflow.arnur.id/` in Google Search Console,
+submit `https://hydroflow.arnur.id/sitemap.xml`, and use URL Inspection to request
+indexing of the homepage. Search Console requires the owner's Google account;
+this repository does not submit or verify ownership automatically. If an admin URL
+was already indexed, its removal takes recrawling; Search Console's removals tool
+can request faster temporary removal.
+
+Rankings and indexing are decided by Google. Useful original project photos,
+case studies, accurate descriptions, and relevant external links support ongoing
+SEO. The existing Tailwind CDN remains a frontend performance dependency; any
+future CSS compilation should happen on a separate build machine, not this ARM host.
+
+References: https://developers.google.com/search/docs/crawling-indexing/block-indexing
+and https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
+
+Google HTML verification file `google195041c754aa4836.html` is served unchanged at
+`https://hydroflow.arnur.id/google195041c754aa4836.html` via an explicit route and a
+read-only Docker mount. It is also included in future images. Keep this file in
+place for ongoing ownership checks. The owner must finish verification in Google
+Search Console; serving the file alone does not confirm account ownership.
