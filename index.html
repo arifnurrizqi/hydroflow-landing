@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Hydroflow adalah sistem monitoring penggunaan dan kualitas air berbasis IoT. Pantau banyak perangkat, alarm, histori, dan datalogger dari satu dashboard.">
+    <meta name="theme-color" content="#071b2e">
+    <title>Hydroflow — IoT Water Monitoring by Arnur Tech</title>
+    <link rel="icon" type="image/svg+xml" href="./logo-hsm.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: '#071b2e',
+                        ocean: '#087ea4',
+                        aqua: '#16b8c8',
+                        mist: '#e8f4f5',
+                        paper: '#f7f9f8',
+                        line: '#dce5e5'
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        display: ['Manrope', 'sans-serif']
+                    },
+                    boxShadow: {
+                        panel: '0 28px 80px rgba(7, 27, 46, 0.14)',
+                        soft: '0 12px 40px rgba(7, 27, 46, 0.08)'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { text-rendering: optimizeLegibility; }
+        .grid-blueprint {
+            background-image:
+                linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+            background-size: 38px 38px;
+        }
+        .water-line {
+            stroke-dasharray: 6 8;
+            animation: waterFlow 13s linear infinite;
+        }
+        @keyframes waterFlow { to { stroke-dashoffset: -140; } }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .water-line { animation: none; }
+            .flow-particle { display: none; }
+        }
+
+        #dokumentasi { scroll-margin-top: 90px; }
+        .documentation-window { overflow-x: auto; scrollbar-width: thin; scrollbar-color: #087ea4 #e8f4f5; }
+        .documentation-window.is-moving { overflow-x: hidden; }
+        .documentation-track { display: flex; width: max-content; }
+        .documentation-window.is-moving .documentation-track { animation: documentationScroll 65s linear infinite; }
+        .documentation-window:hover .documentation-track { animation-play-state: paused; }
+        .documentation-grid { display: grid; flex: none; width: max(1440px, 100vw); height: 460px; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; padding-right: 12px; box-sizing: border-box; }
+        .documentation-photo { margin: 0; overflow: hidden; border-radius: 16px; background: #dce5e5; }
+        .documentation-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+        .documentation-photo:hover img { transform: scale(1.045); }
+        @keyframes documentationScroll { to { transform: translateX(-50%); } }
+        @media (max-width: 640px) {
+            .documentation-grid { width: 1020px; height: 340px; gap: 8px; padding-right: 8px; }
+            .documentation-photo { border-radius: 10px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .documentation-window.is-moving { overflow-x: auto; }
+            .documentation-window.is-moving .documentation-track { animation: none; }
+            .documentation-photo img { transition: none; }
+            .documentation-photo:hover img { transform: none; }
+        }
+    </style>
+</head>
+
+<body class="bg-paper font-sans text-slate-700 antialiased selection:bg-aqua selection:text-ink">
+    <header class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-ink/95 text-white backdrop-blur">
+        <nav class="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 py-4 lg:px-8" aria-label="Navigasi utama">
+            <a href="#beranda" class="flex items-center gap-3" aria-label="Hydroflow beranda">
+                <img src="./logo-hsm.svg" alt="" class="h-11 w-11 rounded-xl object-cover" width="44" height="44">
+                <span>
+                    <span class="block font-display text-[17px] font-extrabold leading-none tracking-[.08em]">HYDROFLOW</span>
+                    <span class="mt-1 block text-[9px] font-semibold uppercase tracking-[.24em] text-slate-400">by Arnur Tech</span>
+                </span>
+            </a>
+
+            <div class="hidden items-center gap-8 text-sm font-medium text-slate-300 md:flex">
+                <a href="#fitur" class="transition hover:text-white">Fitur</a>
+                <a href="#cara-kerja" class="transition hover:text-white">Cara kerja</a>
+                <a href="#penerapan" class="transition hover:text-white">Penerapan</a>
+                <a href="#dokumentasi" class="transition hover:text-white">Dokumentasi</a>
+                <a href="#kontak" class="rounded-lg bg-white px-4 py-2.5 font-semibold text-ink transition hover:bg-aqua">Hubungi kami</a>
+            </div>
+
+            <button id="menu-button" type="button" class="grid h-10 w-10 place-items-center rounded-lg border border-white/15 text-white md:hidden" aria-expanded="false" aria-controls="mobile-menu" aria-label="Buka menu">
+                <svg id="menu-open-icon" viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                <svg id="menu-close-icon" viewBox="0 0 24 24" class="hidden h-5 w-5 fill-none stroke-current" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+        </nav>
+
+        <div id="mobile-menu" class="hidden border-t border-white/10 px-5 pb-5 pt-3 md:hidden">
+            <div class="mx-auto flex max-w-7xl flex-col gap-1 text-sm font-medium text-slate-200">
+                <a href="#fitur" class="rounded-lg px-3 py-3 hover:bg-white/5">Fitur</a>
+                <a href="#cara-kerja" class="rounded-lg px-3 py-3 hover:bg-white/5">Cara kerja</a>
+                <a href="#penerapan" class="rounded-lg px-3 py-3 hover:bg-white/5">Penerapan</a>
+                <a href="#dokumentasi" class="rounded-lg px-3 py-3 hover:bg-white/5">Dokumentasi</a>
+                <a href="#kontak" class="mt-2 rounded-lg bg-aqua px-3 py-3 text-center font-bold text-ink">Hubungi kami</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="beranda" class="relative overflow-hidden bg-ink pb-20 pt-32 text-white lg:pb-28 lg:pt-40">
+            <div class="grid-blueprint absolute inset-0 opacity-60"></div>
+            <div class="absolute -right-40 top-28 h-96 w-96 rounded-full bg-aqua/10 blur-3xl"></div>
+            <div class="relative mx-auto grid max-w-7xl items-center gap-14 px-5 lg:grid-cols-[.88fr_1.12fr] lg:px-8">
+                <div>
+                    <div class="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[.2em] text-aqua">
+                        <span class="h-px w-8 bg-aqua"></span>
+                        IoT water monitoring system
+                    </div>
+                    <h1 class="max-w-xl font-display text-4xl font-extrabold leading-[1.08] tracking-[-.035em] sm:text-5xl lg:text-[64px]">
+                        Data air yang bisa langsung ditindaklanjuti.
+                    </h1>
+                    <p class="mt-6 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
+                        Hydroflow menyatukan pemantauan penggunaan, kualitas, dan level air dalam satu dashboard. Akses kondisi perangkat dari mana saja, kapan saja—tanpa menunggu pencatatan manual.
+                    </p>
+                    <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                        <a href="https://wa.me/628998095663?text=Halo%20Arnur%20Tech%2C%20saya%20ingin%20berdiskusi%20tentang%20Hydroflow." target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-aqua px-5 py-3.5 text-sm font-bold text-ink transition hover:bg-cyan-300">
+                            Konsultasikan kebutuhan
+                            <svg viewBox="0 0 24 24" class="h-4 w-4 fill-none stroke-current" stroke-width="2"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+                        </a>
+                        <a href="#fitur" class="inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-white/5">Lihat kemampuan sistem</a>
+                    </div>
+                    <div class="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-white/10 pt-6">
+                        <div><p class="font-display text-lg font-bold">Realtime</p><p class="mt-1 text-xs leading-5 text-slate-400">Status terkini</p></div>
+                        <div><p class="font-display text-lg font-bold">Multi-device</p><p class="mt-1 text-xs leading-5 text-slate-400">Satu dashboard</p></div>
+                        <div><p class="font-display text-lg font-bold">Data historis</p><p class="mt-1 text-xs leading-5 text-slate-400">Siap dianalisis</p></div>
+                    </div>
+                </div>
+
+                <div class="relative lg:pl-4">
+                    <div class="absolute -left-3 top-12 hidden rounded-xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur xl:block">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400">System status</p>
+                        <p class="mt-1 flex items-center gap-2 text-xs font-semibold"><span class="h-2 w-2 rounded-full bg-emerald-400"></span> All services online</p>
+                    </div>
+
+                    <div class="overflow-hidden rounded-2xl border border-white/15 bg-[#f7f9fb] shadow-panel">
+                        <div class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
+                            <div class="flex gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-red-300"></span><span class="h-2.5 w-2.5 rounded-full bg-amber-300"></span><span class="h-2.5 w-2.5 rounded-full bg-emerald-300"></span></div>
+                            <div class="rounded-md bg-slate-100 px-3 py-1 text-[9px] font-medium text-slate-400">dashboard.hydroflow</div>
+                            <div class="h-5 w-5 rounded bg-slate-100"></div>
+                        </div>
+                        <div class="grid grid-cols-[52px_1fr] sm:grid-cols-[150px_1fr]">
+                            <aside class="min-h-[420px] bg-[#0b2236] px-3 py-5 sm:px-4">
+                                <div class="mb-7 flex items-center justify-center gap-2 sm:justify-start">
+                                    <img src="./logo-hsm.svg" alt="" class="h-7 w-7 rounded-lg object-cover" width="28" height="28">
+                                    <span class="hidden text-[11px] font-extrabold tracking-widest sm:block">HYDROFLOW</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-center gap-2 rounded-lg bg-white/10 px-2 py-2.5 text-aqua sm:justify-start"><span class="h-3.5 w-3.5 rounded-sm border border-current"></span><span class="hidden text-[10px] font-semibold sm:block">Dashboard</span></div>
+                                    <div class="flex items-center justify-center gap-2 px-2 py-2.5 text-slate-500 sm:justify-start"><span class="h-3.5 w-3.5 rounded-full border border-current"></span><span class="hidden text-[10px] sm:block">Devices</span></div>
+                                    <div class="flex items-center justify-center gap-2 px-2 py-2.5 text-slate-500 sm:justify-start"><span class="h-3.5 w-3.5 border-b border-l border-current"></span><span class="hidden text-[10px] sm:block">Datalogger</span></div>
+                                    <div class="flex items-center justify-center gap-2 px-2 py-2.5 text-slate-500 sm:justify-start"><span class="h-3.5 w-3.5 rotate-45 border border-current"></span><span class="hidden text-[10px] sm:block">Alarms</span></div>
+                                </div>
+                            </aside>
+                            <div class="min-w-0 p-3 sm:p-5">
+                                <div class="flex items-start justify-between">
+                                    <div><p class="text-[13px] font-bold text-ink sm:text-base">Water overview</p><p class="mt-0.5 text-[8px] text-slate-400 sm:text-[10px]">Sunday, 28 September</p></div>
+                                    <span class="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[8px] font-bold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Realtime</span>
+                                </div>
+
+                                <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                    <div class="rounded-lg border border-slate-200 bg-white p-2.5"><p class="text-[8px] text-slate-400">Devices online</p><p class="mt-1 text-sm font-bold text-ink">08 <span class="text-[8px] font-normal text-slate-400">/ 09</span></p></div>
+                                    <div class="rounded-lg border border-slate-200 bg-white p-2.5"><p class="text-[8px] text-slate-400">Usage today</p><p class="mt-1 text-sm font-bold text-ink">2.48 <span class="text-[8px] font-normal text-slate-400">kL</span></p></div>
+                                    <div class="rounded-lg border border-slate-200 bg-white p-2.5"><p class="text-[8px] text-slate-400">Water level</p><p class="mt-1 text-sm font-bold text-ink">72.4<span class="text-[8px] font-normal text-slate-400">%</span></p></div>
+                                    <div class="rounded-lg border border-red-100 bg-red-50 p-2.5"><p class="text-[8px] text-red-400">Active alarms</p><p class="mt-1 text-sm font-bold text-red-600">01</p></div>
+                                </div>
+
+                                <div class="mt-3 grid gap-3 sm:grid-cols-[1.35fr_.65fr]">
+                                    <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                        <div class="flex items-center justify-between"><p class="text-[9px] font-bold text-ink">Water usage</p><p class="text-[7px] text-slate-400">Last 24 hours</p></div>
+                                        <svg viewBox="0 0 380 145" class="mt-2 w-full" aria-label="Contoh grafik penggunaan air">
+                                            <defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16b8c8" stop-opacity=".3"/><stop offset="1" stop-color="#16b8c8" stop-opacity="0"/></linearGradient></defs>
+                                            <g stroke="#e8eef1" stroke-width="1"><path d="M0 25h380M0 65h380M0 105h380"/></g>
+                                            <path d="M0 112 C25 108 28 84 55 90 S92 124 118 95 S154 31 183 52 S218 109 246 82 S282 39 310 57 S347 98 380 42 V145 H0Z" fill="url(#chartFill)"/>
+                                            <path d="M0 112 C25 108 28 84 55 90 S92 124 118 95 S154 31 183 52 S218 109 246 82 S282 39 310 57 S347 98 380 42" fill="none" stroke="#087ea4" stroke-width="3" stroke-linecap="round"/>
+                                            <circle cx="380" cy="42" r="4" fill="#16b8c8" stroke="white" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                        <p class="text-[9px] font-bold text-ink">Latest quality</p>
+                                        <div class="mt-4 space-y-3">
+                                            <div><div class="flex justify-between text-[8px]"><span class="text-slate-400">pH</span><span class="font-bold text-ink">7.12</span></div><div class="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full w-[68%] rounded-full bg-aqua"></div></div></div>
+                                            <div><div class="flex justify-between text-[8px]"><span class="text-slate-400">Turbidity</span><span class="font-bold text-ink">2.8 NTU</span></div><div class="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full w-[32%] rounded-full bg-ocean"></div></div></div>
+                                            <div class="rounded-md bg-emerald-50 px-2 py-2 text-center text-[8px] font-bold text-emerald-700">Quality status: Good</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                    <div class="grid grid-cols-[1fr_60px_65px] border-b border-slate-100 px-3 py-2 text-[7px] font-bold uppercase tracking-wider text-slate-400"><span>Device</span><span>Status</span><span>Level</span></div>
+                                    <div class="grid grid-cols-[1fr_60px_65px] items-center px-3 py-2.5 text-[8px]"><span class="font-semibold text-ink">Main Tank — Building A</span><span class="text-emerald-600">Online</span><span class="font-bold text-ink">72.4%</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="border-b border-line bg-white">
+            <div class="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-line px-5 sm:grid-cols-4 lg:px-8">
+                <div class="py-5 pr-4 text-center text-xs font-semibold uppercase tracking-[.14em] text-slate-500 sm:text-left">Gedung & kawasan</div>
+                <div class="px-4 py-5 text-center text-xs font-semibold uppercase tracking-[.14em] text-slate-500">Industri</div>
+                <div class="px-4 py-5 text-center text-xs font-semibold uppercase tracking-[.14em] text-slate-500">Fasilitas umum</div>
+                <div class="py-5 pl-4 text-center text-xs font-semibold uppercase tracking-[.14em] text-slate-500 sm:text-right">Multi-site</div>
+            </div>
+        </section>
+
+        <section class="py-20 lg:py-28">
+            <div class="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[.75fr_1.25fr] lg:gap-20 lg:px-8">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Visibilitas operasional</p>
+                    <h2 class="mt-4 font-display text-3xl font-extrabold leading-tight tracking-[-.025em] text-ink sm:text-4xl">Berhenti menebak kondisi air.</h2>
+                </div>
+                <div class="grid gap-8 sm:grid-cols-2">
+                    <div class="border-l-2 border-aqua pl-5"><p class="font-display text-lg font-bold text-ink">Pantau tanpa datang ke lokasi</p><p class="mt-3 text-sm leading-7 text-slate-500">Data perangkat dikirim ke server dan tersedia melalui dashboard berbasis web selama terhubung ke jaringan.</p></div>
+                    <div class="border-l-2 border-slate-300 pl-5"><p class="font-display text-lg font-bold text-ink">Punya catatan, bukan perkiraan</p><p class="mt-3 text-sm leading-7 text-slate-500">Setiap pembacaan tersimpan sebagai histori untuk penelusuran kejadian, evaluasi konsumsi, dan pelaporan.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fitur" class="border-y border-line bg-white py-20 lg:py-28">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <div class="max-w-2xl">
+                    <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Kemampuan sistem</p>
+                    <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Satu sumber data untuk operasional air.</h2>
+                    <p class="mt-5 text-base leading-8 text-slate-500">Dirancang untuk menjawab kebutuhan monitoring harian, investigasi data, dan pengelolaan lebih dari satu perangkat.</p>
+                </div>
+
+                <div class="mt-14 grid border-l border-t border-line sm:grid-cols-2 lg:grid-cols-3">
+                    <article class="border-b border-r border-line p-6 sm:p-8">
+                        <span class="font-display text-xs font-bold text-ocean">01</span>
+                        <h3 class="mt-6 font-display text-xl font-bold text-ink">Monitoring realtime</h3>
+                        <p class="mt-3 text-sm leading-7 text-slate-500">Lihat pH, turbidity, level tandon, sample flow, tegangan perangkat, sinyal, dan status koneksi dari browser.</p>
+                    </article>
+                    <article class="border-b border-r border-line p-6 sm:p-8">
+                        <span class="font-display text-xs font-bold text-ocean">02</span>
+                        <h3 class="mt-6 font-display text-xl font-bold text-ink">Penggunaan air terukur</h3>
+                        <p class="mt-3 text-sm leading-7 text-slate-500">Pulse flow meter dikonversi menggunakan nilai kalibrasi untuk menampilkan konsumsi harian, bulanan, dan historis dalam liter.</p>
+                    </article>
+                    <article class="border-b border-r border-line p-6 sm:p-8">
+                        <span class="font-display text-xs font-bold text-ocean">03</span>
+                        <h3 class="mt-6 font-display text-xl font-bold text-ink">Alarm berbasis ambang</h3>
+                        <p class="mt-3 text-sm leading-7 text-slate-500">Parameter yang melewati batas operasional ditandai agar tim dapat memeriksa kondisi lebih cepat dan melihat status penyelesaiannya.</p>
+                    </article>
+                    <article class="border-b border-r border-line p-6 sm:p-8">
+                        <span class="font-display text-xs font-bold text-ocean">04</span>
+                        <h3 class="mt-6 font-display text-xl font-bold text-ink">Datalogger & export</h3>
+                        <p class="mt-3 text-sm leading-7 text-slate-500">Telusuri data mentah maupun agregat per jam, hari, bulan, dan tahun. Export CSV untuk pengolahan lebih lanjut di Excel.</p>
+                    </article>
+                    <article class="border-b border-r border-line p-6 sm:p-8">
+                        <span class="font-display text-xs font-bold text-ocean">05</span>
+                        <h3 class="mt-6 font-display text-xl font-bold text-ink">Manajemen multi-device</h3>
+                        <p class="mt-3 text-sm leading-7 text-slate-500">Kelola banyak titik monitoring dari satu dashboard, lengkap dengan identitas, lokasi, konfigurasi, dan akses pengguna.</p>
+                    </article>
+                    <article class="border-b border-r border-line p-6 sm:p-8">
+                        <span class="font-display text-xs font-bold text-ocean">06</span>
+                        <h3 class="mt-6 font-display text-xl font-bold text-ink">Kontrol perangkat terintegrasi</h3>
+                        <p class="mt-3 text-sm leading-7 text-slate-500">Kirim perintah drain valve melalui MQTT dan pantau acknowledgement perangkat pada instalasi yang mendukung fitur kontrol.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="cara-kerja" class="overflow-hidden bg-ink py-20 text-white lg:py-28">
+            <div class="mx-auto grid max-w-7xl items-center gap-14 px-5 lg:grid-cols-2 lg:gap-20 lg:px-8">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[.2em] text-aqua">Cara kerja</p>
+                    <h2 class="mt-4 max-w-lg font-display text-3xl font-extrabold tracking-[-.025em] sm:text-4xl">Dari sensor di lapangan menjadi informasi yang jelas.</h2>
+                    <div class="mt-10 space-y-8">
+                        <div class="grid grid-cols-[42px_1fr] gap-4"><span class="grid h-10 w-10 place-items-center rounded-full border border-aqua/40 text-sm font-bold text-aqua">1</span><div><h3 class="font-display font-bold">Perangkat membaca kondisi air</h3><p class="mt-2 text-sm leading-7 text-slate-400">Sensor dan flow meter mengukur parameter yang dibutuhkan sesuai konfigurasi instalasi.</p></div></div>
+                        <div class="grid grid-cols-[42px_1fr] gap-4"><span class="grid h-10 w-10 place-items-center rounded-full border border-aqua/40 text-sm font-bold text-aqua">2</span><div><h3 class="font-display font-bold">Telemetry dikirim ke server</h3><p class="mt-2 text-sm leading-7 text-slate-400">Data masuk melalui API, divalidasi, dikonversi, dan disimpan sebagai histori yang dapat ditelusuri.</p></div></div>
+                        <div class="grid grid-cols-[42px_1fr] gap-4"><span class="grid h-10 w-10 place-items-center rounded-full border border-aqua/40 text-sm font-bold text-aqua">3</span><div><h3 class="font-display font-bold">Tim memantau dan mengambil tindakan</h3><p class="mt-2 text-sm leading-7 text-slate-400">Dashboard menampilkan kondisi terbaru, tren pemakaian, status kualitas, dan alarm pada perangkat terkait.</p></div></div>
+                    </div>
+                </div>
+
+                <div class="relative mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-white/[.04] p-4 sm:p-8">
+                    <svg viewBox="0 0 680 390" class="w-full" role="img" aria-label="Alur air dan sensor menuju perangkat Hydroflow, server, penyimpanan data, lalu dashboard">
+                        <defs>
+                            <marker id="flowArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                                <path d="M0 0 8 4 0 8Z" fill="#16b8c8"/>
+                            </marker>
+                            <filter id="flowGlow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="5" result="blur"/>
+                                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Animated telemetry route: water -> device -> server -> dashboard -->
+                        <path id="routeWaterDevice" class="water-line" d="M138 164 H204" fill="none" stroke="#16b8c8" stroke-width="2.5" marker-end="url(#flowArrow)" opacity=".85"/>
+                        <path id="routeDeviceServer" class="water-line" d="M320 164 H386" fill="none" stroke="#16b8c8" stroke-width="2.5" marker-end="url(#flowArrow)" opacity=".85"/>
+                        <path id="routeServerMonitor" class="water-line" d="M502 164 H568" fill="none" stroke="#16b8c8" stroke-width="2.5" marker-end="url(#flowArrow)" opacity=".85"/>
+                        <path class="water-line" d="M444 222 V275" fill="none" stroke="#16b8c8" stroke-width="2" marker-end="url(#flowArrow)" opacity=".45"/>
+
+                        <circle class="flow-particle" r="4" fill="#67e8f9" filter="url(#flowGlow)">
+                            <animateMotion dur="3.8s" repeatCount="indefinite" begin="0s"><mpath href="#routeWaterDevice"/></animateMotion>
+                        </circle>
+                        <circle class="flow-particle" r="4" fill="#67e8f9" filter="url(#flowGlow)">
+                            <animateMotion dur="3.8s" repeatCount="indefinite" begin="1.2s"><mpath href="#routeDeviceServer"/></animateMotion>
+                        </circle>
+                        <circle class="flow-particle" r="4" fill="#67e8f9" filter="url(#flowGlow)">
+                            <animateMotion dur="3.8s" repeatCount="indefinite" begin="2.4s"><mpath href="#routeServerMonitor"/></animateMotion>
+                        </circle>
+
+                        <!-- Water and physical sensors -->
+                        <g transform="translate(22 106)">
+                            <rect width="116" height="116" rx="20" fill="#fff" fill-opacity=".06" stroke="#fff" stroke-opacity=".14"/>
+                            <path d="M58 19C43 41 30 54 30 72a28 28 0 0 0 56 0c0-18-13-31-28-53Z" fill="#16b8c8" fill-opacity=".08" stroke="#22d3ee" stroke-width="3.5"/>
+                            <path d="M38 77c8-5 15 5 24 0s14 3 18 1" fill="none" stroke="#67e8f9" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="22" cy="31" r="3" fill="#16b8c8"/><path d="M22 31 38 44" stroke="#16b8c8" stroke-width="1.5" stroke-dasharray="3 4"/>
+                            <text x="58" y="103" text-anchor="middle" fill="#94a3b8" font-size="10" letter-spacing="1">AIR + SENSOR</text>
+                        </g>
+
+                        <!-- Hydroflow edge device / microcontroller -->
+                        <g transform="translate(204 106)">
+                            <rect width="116" height="116" rx="20" fill="#16b8c8" fill-opacity=".1" stroke="#16b8c8" stroke-opacity=".48"/>
+                            <g stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round">
+                                <path d="M25 31H15M25 45H15M25 59H15M25 73H15M25 87H15M101 31H91M101 45H91M101 59H91M101 73H91M101 87H91"/>
+                                <path d="M38 18V8M51 18V8M65 18V8M78 18V8M38 108V98M51 108V98M65 108V98M78 108V98"/>
+                            </g>
+                            <rect x="25" y="18" width="66" height="80" rx="9" fill="#0c293c" stroke="#22d3ee" stroke-width="2.5"/>
+                            <path d="M58 35c-8 11-15 19-15 28a15 15 0 0 0 30 0c0-9-7-17-15-28Z" fill="none" stroke="#67e8f9" stroke-width="2.5"/>
+                            <path d="M48 67c6-3 10 3 16 0 3-2 6-1 8 0" fill="none" stroke="#67e8f9" stroke-width="1.5"/>
+                            <text x="58" y="112" text-anchor="middle" fill="#94a3b8" font-size="9" letter-spacing=".8">HYDROFLOW DEVICE</text>
+                        </g>
+
+                        <!-- Server -->
+                        <g transform="translate(386 106)">
+                            <rect width="116" height="116" rx="20" fill="#fff" fill-opacity=".06" stroke="#fff" stroke-opacity=".14"/>
+                            <rect x="25" y="24" width="66" height="18" rx="4" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+                            <rect x="25" y="49" width="66" height="18" rx="4" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+                            <rect x="25" y="74" width="66" height="18" rx="4" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+                            <g fill="#67e8f9"><circle cx="34" cy="33" r="2"/><circle cx="34" cy="58" r="2"/><circle cx="34" cy="83" r="2"/></g>
+                            <g stroke="#16b8c8" stroke-width="1.5"><path d="M43 33h35M43 58h35M43 83h35"/></g>
+                            <text x="58" y="110" text-anchor="middle" fill="#94a3b8" font-size="10" letter-spacing="1">SERVER</text>
+                        </g>
+
+                        <!-- Web dashboard -->
+                        <g transform="translate(568 106)">
+                            <rect width="90" height="116" rx="20" fill="#fff" fill-opacity=".06" stroke="#fff" stroke-opacity=".14"/>
+                            <rect x="14" y="24" width="62" height="50" rx="5" fill="#16b8c8" fill-opacity=".06" stroke="#22d3ee" stroke-width="2.5"/>
+                            <path d="M35 89h20M45 74v15" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="m23 61 11-10 10 5 18-18" fill="none" stroke="#67e8f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <text x="45" y="108" text-anchor="middle" fill="#94a3b8" font-size="9" letter-spacing=".7">DASHBOARD</text>
+                        </g>
+
+                        <!-- Historical data branch -->
+                        <g transform="translate(396 276)">
+                            <ellipse cx="48" cy="9" rx="38" ry="9" fill="#16b8c8" fill-opacity=".1" stroke="#16b8c8" stroke-width="2"/>
+                            <path d="M10 9v45c0 5 17 9 38 9s38-4 38-9V9M10 31c0 5 17 9 38 9s38-4 38-9" fill="#16b8c8" fill-opacity=".04" stroke="#16b8c8" stroke-width="2"/>
+                            <text x="48" y="82" text-anchor="middle" fill="#64748b" font-size="9" letter-spacing="1">DATALOGGER</text>
+                        </g>
+
+                        <g fill="#64748b" font-size="9" font-weight="600" letter-spacing="1.2">
+                            <text x="80" y="254" text-anchor="middle">MEASURE</text>
+                            <text x="262" y="254" text-anchor="middle">EDGE PROCESS</text>
+                            <text x="444" y="254" text-anchor="middle">STORE &amp; PROCESS</text>
+                            <text x="613" y="254" text-anchor="middle">MONITOR</text>
+                        </g>
+                    </svg>
+                    <p class="mt-2 text-center text-[10px] font-semibold uppercase tracking-[.16em] text-slate-500">Data bergerak dari lapangan ke dashboard secara terukur</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="penerapan" class="py-20 lg:py-28">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <div class="grid gap-10 lg:grid-cols-[.7fr_1.3fr]">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Penerapan</p>
+                        <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Fleksibel untuk berbagai titik air.</h2>
+                        <p class="mt-5 text-sm leading-7 text-slate-500">Konfigurasi perangkat, parameter, dan jaringan dapat disesuaikan dengan kebutuhan lokasi.</p>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-2xl border border-line bg-white p-6 shadow-soft"><p class="text-xs font-bold uppercase tracking-wider text-ocean">01</p><h3 class="mt-5 font-display text-lg font-bold text-ink">Tandon gedung</h3><p class="mt-2 text-sm leading-6 text-slate-500">Monitor level, kualitas air, dan konsumsi pada jalur distribusi menuju gedung.</p></div>
+                        <div class="rounded-2xl border border-line bg-white p-6 shadow-soft"><p class="text-xs font-bold uppercase tracking-wider text-ocean">02</p><h3 class="mt-5 font-display text-lg font-bold text-ink">Fasilitas multi-lokasi</h3><p class="mt-2 text-sm leading-6 text-slate-500">Satukan status beberapa titik atau cabang agar tim tidak memeriksa sistem satu per satu.</p></div>
+                        <div class="rounded-2xl border border-line bg-white p-6 shadow-soft"><p class="text-xs font-bold uppercase tracking-wider text-ocean">03</p><h3 class="mt-5 font-display text-lg font-bold text-ink">Utilitas proses</h3><p class="mt-2 text-sm leading-6 text-slate-500">Sediakan histori parameter dan penggunaan untuk membantu evaluasi operasional.</p></div>
+                        <div class="rounded-2xl border border-line bg-white p-6 shadow-soft"><p class="text-xs font-bold uppercase tracking-wider text-ocean">04</p><h3 class="mt-5 font-display text-lg font-bold text-ink">Sistem khusus</h3><p class="mt-2 text-sm leading-6 text-slate-500">Integrasikan sensor, interval pengiriman, dan batas alarm sesuai karakter instalasi.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="dokumentasi" class="overflow-hidden border-t border-line bg-white py-20 lg:py-28" aria-labelledby="documentation-heading">
+            <div class="mx-auto mb-10 flex max-w-7xl flex-col gap-6 px-5 sm:flex-row sm:items-end sm:justify-between lg:px-8">
+                <div class="max-w-2xl">
+                    <p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Dokumentasi proyek</p>
+                    <h2 id="documentation-heading" class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Lebih dekat dengan Hydroflow.</h2>
+                    <p class="mt-5 text-sm leading-7 text-slate-500">Ruang cerita visual dari proses hingga penerapan di lapangan. Foto yang ditampilkan sementara merupakan placeholder.</p>
+                </div>
+                <button id="documentation-toggle" type="button" hidden class="shrink-0 rounded-xl border border-line bg-paper px-5 py-3 text-sm font-semibold text-ink transition hover:bg-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ocean" aria-controls="documentation-gallery">Jeda animasi</button>
+            </div>
+            <div id="documentation-gallery" class="documentation-window" tabindex="0" role="region" aria-label="Galeri foto dokumentasi proyek, geser untuk melihat foto lainnya">
+                <div class="documentation-track">
+                    <div class="documentation-grid">
+                        <figure class="documentation-photo" style="grid-column: 1 / span 3; grid-row: 1 / span 2">
+                            <img src="https://picsum.photos/seed/hydroflow-1/600/600" alt="Foto placeholder dokumentasi 1" width="600" height="600" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 4 / span 3; grid-row: 1">
+                            <img src="https://picsum.photos/seed/hydroflow-2/640/320" alt="Foto placeholder dokumentasi 2" width="640" height="320" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 4 / span 2; grid-row: 2 / span 2">
+                            <img src="https://picsum.photos/seed/hydroflow-3/400/600" alt="Foto placeholder dokumentasi 3" width="400" height="600" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 6; grid-row: 2 / span 2">
+                            <img src="https://picsum.photos/seed/hydroflow-4/260/600" alt="Foto placeholder dokumentasi 4" width="260" height="600" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 7 / span 2; grid-row: 1 / span 3">
+                            <img src="https://picsum.photos/seed/hydroflow-5/400/800" alt="Foto placeholder dokumentasi 5" width="400" height="800" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 9 / span 4; grid-row: 1 / span 2">
+                            <img src="https://picsum.photos/seed/hydroflow-6/800/520" alt="Foto placeholder dokumentasi 6" width="800" height="520" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 9 / span 2; grid-row: 3">
+                            <img src="https://picsum.photos/seed/hydroflow-7/440/300" alt="Foto placeholder dokumentasi 7" width="440" height="300" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 11 / span 2; grid-row: 3">
+                            <img src="https://picsum.photos/seed/hydroflow-8/440/300" alt="Foto placeholder dokumentasi 8" width="440" height="300" loading="lazy" decoding="async">
+                        </figure>
+                        <figure class="documentation-photo" style="grid-column: 1 / span 3; grid-row: 3">
+                            <img src="https://picsum.photos/seed/hydroflow-9/640/320" alt="Foto placeholder dokumentasi 9" width="640" height="320" loading="lazy" decoding="async">
+                        </figure>
+                    </div>
+                </div>
+            </div>
+            <p class="mx-auto mt-5 max-w-7xl px-5 text-xs text-slate-500 lg:px-8">Galeri foto · Cuplikan visual perjalanan proyek</p>
+        </section>
+
+        <section class="border-y border-line bg-mist/60 py-16">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <div class="grid gap-8 lg:grid-cols-[1fr_1.25fr] lg:items-center">
+                    <div><p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Dibangun untuk deployment nyata</p><h2 class="mt-4 font-display text-2xl font-extrabold text-ink sm:text-3xl">Dapat ditempatkan di server organisasi.</h2></div>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-3">
+                        <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Web dashboard</p>
+                        <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Docker deployment</p>
+                        <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Internal / external MQTT</p>
+                        <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> API telemetry</p>
+                        <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Role pengguna</p>
+                        <p class="flex items-center gap-2 font-medium text-slate-600"><span class="h-1.5 w-1.5 rounded-full bg-ocean"></span> Backup data</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="kontak" class="bg-white py-20 lg:py-28">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <div class="relative overflow-hidden rounded-3xl bg-ink px-6 py-12 text-white sm:px-10 lg:px-16 lg:py-16">
+                    <div class="grid-blueprint absolute inset-0 opacity-50"></div>
+                    <div class="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+                        <div class="max-w-2xl">
+                            <p class="text-xs font-bold uppercase tracking-[.2em] text-aqua">Mulai dari kebutuhan lapangan</p>
+                            <h2 class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] sm:text-4xl">Ceritakan titik air yang ingin Anda pantau.</h2>
+                            <p class="mt-5 text-base leading-8 text-slate-300">Kami dapat membantu membahas kebutuhan sensor, jumlah perangkat, jaringan, dashboard, dan skenario deployment Hydroflow.</p>
+                        </div>
+                        <div class="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                            <a href="https://wa.me/628998095663?text=Halo%20Arnur%20Tech%2C%20saya%20ingin%20berdiskusi%20tentang%20Hydroflow." target="_blank" rel="noopener" class="inline-flex min-w-52 items-center justify-center gap-2 rounded-xl bg-aqua px-5 py-3.5 text-sm font-bold text-ink transition hover:bg-cyan-300">
+                                WhatsApp kami
+                                <svg viewBox="0 0 24 24" class="h-4 w-4 fill-none stroke-current" stroke-width="2"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+                            </a>
+                            <a href="mailto:arnurtech@gmail.com?subject=Konsultasi%20Hydroflow" class="inline-flex min-w-52 items-center justify-center rounded-xl border border-white/20 px-5 py-3.5 text-sm font-semibold transition hover:bg-white/5">arnurtech@gmail.com</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-line bg-paper">
+        <div class="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+            <div class="flex items-center gap-3">
+                <img src="./logo-hsm.svg" alt="" class="h-10 w-10 rounded-lg object-cover" width="40" height="40">
+                <div><p class="font-display text-sm font-extrabold tracking-wider text-ink">HYDROFLOW</p><p class="text-[10px] text-slate-400">IoT Water Monitoring by Arnur Tech</p></div>
+            </div>
+            <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-500">
+                <a href="tel:+628998095663" class="hover:text-ink">0899 8095 663</a>
+                <a href="mailto:arnurtech@gmail.com" class="hover:text-ink">arnurtech@gmail.com</a>
+            </div>
+            <p class="text-xs text-slate-400">&copy; <span id="year"></span> Arnur Tech</p>
+        </div>
+    </footer>
+
+    <script>
+        const menuButton = document.getElementById('menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const openIcon = document.getElementById('menu-open-icon');
+        const closeIcon = document.getElementById('menu-close-icon');
+
+        function setMenu(open) {
+            mobileMenu.classList.toggle('hidden', !open);
+            openIcon.classList.toggle('hidden', open);
+            closeIcon.classList.toggle('hidden', !open);
+            menuButton.setAttribute('aria-expanded', String(open));
+        }
+
+        menuButton.addEventListener('click', () => setMenu(mobileMenu.classList.contains('hidden')));
+        mobileMenu.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setMenu(false)));
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        const gallery = document.getElementById('documentation-gallery');
+        const galleryTrack = gallery.querySelector('.documentation-track');
+        const galleryToggle = document.getElementById('documentation-toggle');
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const galleryCopy = galleryTrack.firstElementChild.cloneNode(true);
+        galleryCopy.setAttribute('aria-hidden', 'true');
+        galleryCopy.querySelectorAll('img').forEach(img => { img.alt = ''; });
+        galleryTrack.appendChild(galleryCopy);
+        let galleryPaused = false;
+
+        function updateGallery() {
+            const moving = !galleryPaused && !reducedMotion.matches;
+            gallery.scrollLeft = 0;
+            gallery.classList.toggle('is-moving', moving);
+            galleryCopy.hidden = !moving;
+            galleryCopy.style.display = moving ? '' : 'none';
+            galleryToggle.hidden = reducedMotion.matches;
+            galleryToggle.textContent = moving ? 'Jeda animasi' : 'Putar animasi';
+        }
+        galleryToggle.addEventListener('click', () => {
+            galleryPaused = !galleryPaused;
+            updateGallery();
+        });
+        gallery.addEventListener('focus', () => {
+            galleryPaused = true;
+            updateGallery();
+        });
+        reducedMotion.addEventListener('change', updateGallery);
+        updateGallery();
+
+    </script>
+</body>
+</html>

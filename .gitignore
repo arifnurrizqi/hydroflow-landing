@@ -1,0 +1,6 @@
+.env
+.admin-credentials
+data/
+__pycache__/
+*.pyc
+node_modules/
