@@ -2,6 +2,23 @@
 
 Flask + SQLite + Gunicorn. Landing page `/`, admin `/admin`.
 
+## Local development (Windows)
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements.txt
+.\.venv\Scripts\python run_local.py
+```
+
+Open http://127.0.0.1:8091 and http://127.0.0.1:8091/admin.
+The development runner generates a persistent secret and initial admin credentials
+in `data/local/credentials.json` (ignored by Git). Its SQLite database and uploads
+are kept in `data/local`, separate from Docker data. After changing the password
+in the CMS, use the new password; the file only records the initial credentials.
+Stop with Ctrl+C. This server is for local development.
+
+Run checks with `.\.venv\Scripts\python -m unittest discover -s tests -v`.
+
 ## Local Docker
 
 ```sh
@@ -16,6 +33,7 @@ Initial credentials for this installation are in `.admin-credentials` (owner-rea
 
 ## Content
 
+- Video demo: Admin → Video Demo accepts YouTube watch, youtu.be, Shorts, live, and embed links. Saving shows a responsive YouTube iframe and a hero demo link. Clear the field to hide them. Use a public/unlisted video with embedding enabled. Existing databases receive the empty setting automatically.
 - Documentation: multi-upload JPG/PNG/WebP, up to 10 MB per photo, 20 photos / 32 MB per request. Files are re-encoded to WebP and resized to at most 1920 px. No fixed gallery photo count. Set caption, numeric order, and visibility per photo; deletion asks for confirmation.
 - Contact: phone, WhatsApp number, email, and initial WhatsApp message update all landing-page contact links.
 - Logo: JPG/PNG/WebP uploads update header, dashboard illustration, footer, and favicon. The supplied SVG remains available as the reset default.

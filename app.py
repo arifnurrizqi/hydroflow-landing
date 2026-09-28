@@ -8,7 +8,7 @@ import warnings
 from datetime import timedelta
 from functools import wraps
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit, parse_qs
 
 from flask import Flask, abort, flash, g, redirect, render_template, request, send_from_directory, session, url_for
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -46,7 +46,7 @@ with app.app_context():
         CREATE TABLE IF NOT EXISTS attempts (ip TEXT PRIMARY KEY, count INTEGER NOT NULL, started REAL NOT NULL);
     ''')
     defaults = {'phone': '0899 8095 663', 'whatsapp': '628998095663', 'email': 'arnurtech@gmail.com',
-                'message': 'Halo Arnur Tech, saya ingin berdiskusi tentang Hydroflow.', 'logo': '/logo-hsm.svg'}
+                'message': 'Halo Arnur Tech, saya ingin berdiskusi tentang Hydroflow.', 'logo': '/logo-hsm.svg', 'demo_video': ''}
     for key, value in defaults.items():
         db().execute('INSERT OR IGNORE INTO settings VALUES (?,?)', (key, value))
     if not db().execute('SELECT 1 FROM users').fetchone():
@@ -62,6 +62,31 @@ with app.app_context():
 
 def settings():
     return dict(db().execute('SELECT key,value FROM settings').fetchall())
+
+def youtube_id(value):
+    """Accept supported YouTube URLs and return only a validated video ID."""
+    if len(value) > 2048:
+        raise ValueError('Link video terlalu panjang.')
+    try:
+        url = urlsplit(value)
+        if url.scheme not in {'http', 'https'} or url.username or url.password or url.port:
+            raise ValueError()
+        host = url.hostname
+        parts = url.path.strip('/').split('/')
+        video_id = ''
+        if host == 'youtu.be' and len(parts) == 1:
+            video_id = parts[0]
+        elif host in {'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'}:
+            if url.path == '/watch' and host in {'youtube.com', 'www.youtube.com', 'm.youtube.com'}:
+                video_id = parse_qs(url.query).get('v', [''])[0]
+            elif len(parts) == 2 and parts[0] in {'embed', 'shorts', 'live'}:
+                video_id = parts[1]
+        if not re.fullmatch(r'[A-Za-z0-9_-]{11}', video_id):
+            raise ValueError()
+        return video_id
+    except ValueError:
+        raise ValueError('Masukkan link video YouTube yang valid (watch, youtu.be, Shorts, live, atau embed).') from None
+
 
 def csrf_token():
     if 'csrf' not in session:
@@ -97,6 +122,12 @@ def admin_required(fn):
 @app.get('/')
 def landing():
     config = settings()
+    demo_embed_url = ''
+    if config['demo_video']:
+        try:
+            demo_embed_url = 'https://www.youtube-nocookie.com/embed/' + youtube_id(config['demo_video'])
+        except ValueError:
+            pass
     photos = db().execute('SELECT * FROM photos WHERE visible=1 ORDER BY position,id').fetchall()
     columns = []
     i = 0
@@ -104,7 +135,7 @@ def landing():
         count = 1 if len(columns) % 3 == 0 else 2
         columns.append(photos[i:i+count])
         i += count
-    return render_template('landing.html', config=config, columns=columns,
+    return render_template('landing.html', config=config, columns=columns, demo_embed_url=demo_embed_url,
                            whatsapp_url='https://wa.me/' + config['whatsapp'] + '?text=' + quote(config['message']),
                            phone_href=re.sub(r'[^+0-9]', '', config['phone']))
 
@@ -243,6 +274,19 @@ def contact_update():
         db().commit()
         flash('Kontak berhasil disimpan.', 'success')
     return redirect(url_for('admin') + '#kontak')
+
+@app.post('/admin/video')
+@admin_required
+def video_update():
+    value = request.form.get('demo_video', '').strip()
+    try:
+        canonical = 'https://www.youtube.com/watch?v=' + youtube_id(value) if value else ''
+        db().execute("UPDATE settings SET value=? WHERE key='demo_video'", (canonical,))
+        db().commit()
+        flash('Video demo berhasil disimpan.' if canonical else 'Video demo disembunyikan.', 'success')
+    except ValueError as exc:
+        flash(str(exc), 'error')
+    return redirect(url_for('admin') + '#video-demo')
 
 @app.post('/admin/logo')
 @admin_required

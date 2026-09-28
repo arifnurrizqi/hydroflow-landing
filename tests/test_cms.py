@@ -38,7 +38,25 @@ class CMS(unittest.TestCase):
         page=self.client.get('/').text
         self.assertIn('documentation-column',page)
         self.assertNotIn('{{',page)
-        Path('/tmp/hydroflow-rendered.html').write_text(page)
+        Path(os.environ['DATA_DIR'], 'hydroflow-rendered.html').write_text(page)
+
+    def test_video_lifecycle(self):
+        self.assertNotIn('<iframe', self.client.get('/').text)
+        for link in ('https://youtu.be/abcdefghijk?si=test', 'https://www.youtube.com/watch?v=abcdefghijk&t=10', 'https://youtube.com/shorts/abcdefghijk', 'https://youtube.com/live/abcdefghijk', 'https://www.youtube-nocookie.com/embed/abcdefghijk'):
+            self.assertEqual(self.post('/admin/video', {'demo_video': link}).status_code, 302)
+            self.assertIn('src="https://www.youtube-nocookie.com/embed/abcdefghijk"', self.client.get('/').text)
+            self.assertIn('https://www.youtube.com/watch?v=abcdefghijk', self.client.get('/admin').text)
+        for link in ('javascript:alert(1)', 'https://youtube.com.evil.test/watch?v=abcdefghijk', 'https://youtube.com@evil.test/watch?v=abcdefghijk', 'https://youtube.com/watch?v=bad', 'https://example.com/abcdefghijk', 'https://youtu.be/abcdefghijk/extra', 'https://[invalid', 'x' * 2049):
+            self.post('/admin/video', {'demo_video': link})
+            self.assertIn('src="https://www.youtube-nocookie.com/embed/abcdefghijk"', self.client.get('/').text)
+        stranger = app.test_client()
+        self.assertEqual(stranger.post('/admin/video').status_code, 400)
+        with stranger.session_transaction() as session:
+            session['csrf'] = 'token'
+        self.assertEqual(stranger.post('/admin/video', data={'csrf': 'token', 'demo_video': ''}).status_code, 302)
+        self.assertIn('<iframe', self.client.get('/').text)
+        self.post('/admin/video', {'demo_video': ''})
+        self.assertNotIn('<iframe', self.client.get('/').text)
 
     def test_contact_and_escaping(self):
         result=self.post('/admin/contact',{'phone':'+62 812 1234 5678','whatsapp':'+62 812 1234 5678','email':'test@example.com','message':'Halo & selamat datang'})
@@ -57,11 +75,12 @@ class CMS(unittest.TestCase):
         response=self.client.get(photo['src'])
         self.assertEqual(response.status_code,200)
         self.assertEqual(response.mimetype,'image/webp')
+        response.close()
         self.post(f'/admin/photos/{photo["id"]}',{'caption':'<script>alert(1)</script>','position':'0','visible':'on'})
         self.assertIn('&lt;script&gt;',self.client.get('/').text)
         self.post(f'/admin/photos/{photo["id"]}',{'caption':'hidden-photo-marker','position':'0'})
         self.assertNotIn('hidden-photo-marker',self.client.get('/').text)
-        self.post(f'/admin/photos/{photo["id"]}',{'action':'delete'})
+        self.assertEqual(self.post(f'/admin/photos/{photo["id"]}',{'action':'delete'}).status_code, 302)
         self.assertEqual(self.client.get(photo['src']).status_code,404)
         with app.app_context():
             before=db().execute('SELECT COUNT(*) FROM photos').fetchone()[0]
