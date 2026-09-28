@@ -1,22 +1,34 @@
 name: hydroflow-landing-cms
 services:
   cms:
-    build: .
-    restart: unless-stopped
+    image: hydroflow-landing-cms-cms:latest
+    # Image supplies pinned native dependencies; code mounts avoid builds on this host.
+    platform: linux/arm64
+    pull_policy: never
+    restart: "on-failure:3"
     ports:
       - "127.0.0.1:${CMS_PORT:-8091}:8000"
     env_file: .env
+    command: ["gunicorn", "--config", "/app/gunicorn.conf.py", "app:app"]
     volumes:
       - cms_data:/app/data
+      - ./app.py:/app/app.py:ro
+      - ./gunicorn.conf.py:/app/gunicorn.conf.py:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+      - ./logo-hsm.svg:/app/logo-hsm.svg:ro
     read_only: true
     tmpfs:
-      - /tmp:size=128m,mode=1777
+      - /tmp:size=24m,mode=1777
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    mem_limit: 384m
-    cpus: 1.0
+    mem_limit: 256m
+    memswap_limit: 256m
+    mem_reservation: 64m
+    cpus: 0.50
+    pids_limit: 32
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
       interval: 30s

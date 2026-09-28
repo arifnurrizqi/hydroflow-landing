@@ -20,10 +20,12 @@ DATA.mkdir(parents=True, exist_ok=True)
 UPLOADS = DATA / 'uploads'
 UPLOADS.mkdir(exist_ok=True)
 app = Flask(__name__)
-app.config.update(SECRET_KEY=os.environ['SECRET_KEY'], MAX_CONTENT_LENGTH=32 * 1024 * 1024,
+app.config.update(SECRET_KEY=os.environ['SECRET_KEY'], MAX_CONTENT_LENGTH=16 * 1024 * 1024,
+                  MAX_FORM_PARTS=40, MAX_FORM_MEMORY_SIZE=128 * 1024,
                   SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax',
                   PERMANENT_SESSION_LIFETIME=timedelta(hours=8))
-Image.MAX_IMAGE_PIXELS = 25_000_000
+MAX_IMAGE_PIXELS = 12_500_000
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 
 def db():
     if 'db' not in g:
@@ -200,11 +202,18 @@ def save_image(file):
             with Image.open(file.stream) as source:
                 if source.format not in {'JPEG', 'PNG', 'WEBP'}:
                     raise ValueError('Gunakan gambar JPG, PNG, atau WebP.')
-                img = ImageOps.exif_transpose(source)
-                img.thumbnail((1920, 1920))
-                img = img.convert('RGBA' if 'A' in img.getbands() or 'transparency' in img.info else 'RGB')
-                name = secrets.token_hex(16) + '.webp'
-                img.save(UPLOADS / name, 'WEBP', quality=85)
+                # Check the header before decoding. Compressed file size does not
+                # bound decoded pixel memory, especially for PNG and WebP.
+                if source.width * source.height > MAX_IMAGE_PIXELS:
+                    raise ValueError('Dimensi foto maksimal 12,5 megapiksel. Perkecil gambar terlebih dahulu.')
+                # Resize before EXIF rotation to avoid two full-resolution copies.
+                # thumbnail also uses JPEG draft decoding where supported.
+                source.thumbnail((1920, 1920))
+                with ImageOps.exif_transpose(source) as oriented:
+                    mode = 'RGBA' if 'A' in oriented.getbands() or 'transparency' in oriented.info else 'RGB'
+                    with oriented.convert(mode) as img:
+                        name = secrets.token_hex(16) + '.webp'
+                        img.save(UPLOADS / name, 'WEBP', quality=82, method=2)
                 return '/uploads/' + name
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
         raise ValueError('File gambar tidak valid atau dimensinya terlalu besar.')
@@ -221,8 +230,8 @@ def photo_upload():
         files = [f for f in request.files.getlist('photos') if f.filename]
         if not files:
             raise ValueError('Pilih minimal satu foto.')
-        if len(files) > 20:
-            raise ValueError('Upload maksimal 20 foto sekaligus.')
+        if len(files) > 8:
+            raise ValueError('Upload maksimal 8 foto sekaligus.')
         for file in files:
             saved.append(save_image(file))
         position = db().execute('SELECT COALESCE(MAX(position),0) FROM photos').fetchone()[0]
@@ -321,7 +330,7 @@ def password_update():
 
 @app.errorhandler(413)
 def too_large(error):
-    return render_template('error.html', message='Total upload maksimal 32 MB per pengiriman. Coba unggah dalam beberapa batch.'), 413
+    return render_template('error.html', message='Total upload maksimal 16 MB per pengiriman. Coba unggah dalam beberapa batch.'), 413
 
 @app.errorhandler(400)
 def bad_request(error):

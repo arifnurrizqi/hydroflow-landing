@@ -88,6 +88,52 @@ class CMS(unittest.TestCase):
         with app.app_context():
             self.assertEqual(before,db().execute('SELECT COUNT(*) FROM photos').fetchone()[0])
 
+    def test_large_photo_is_resized_with_bounded_memory(self):
+        data = io.BytesIO()
+        with Image.new('RGB', (4000, 3000), 'teal') as image:
+            image.save(data, 'PNG')
+        data.seek(0)
+        self.post('/admin/photos/upload', {'photos': (data, 'large.png')})
+        with app.app_context():
+            photo = db().execute('SELECT * FROM photos ORDER BY id DESC').fetchone()
+        response = self.client.get(photo['src'])
+        with Image.open(io.BytesIO(response.data)) as result:
+            self.assertEqual(result.size, (1920, 1440))
+        response.close()
+        self.post(f'/admin/photos/{photo["id"]}', {'action': 'delete'})
+
+    def test_oversized_header_and_batch_rejected_without_partial_uploads(self):
+        import struct
+        import zlib
+        raw = bytearray(self.image().getvalue())
+        # A real PNG header advertising 25 MP must be rejected before decoding.
+        raw[16:24] = struct.pack('>II', 5000, 5000)
+        raw[29:33] = struct.pack('>I', zlib.crc32(raw[12:29]))
+        upload_dir = Path(os.environ['DATA_DIR'], 'uploads')
+        before = set(upload_dir.iterdir())
+        self.post('/admin/photos/upload', {'photos': [
+            (self.image(), 'good.png'), (io.BytesIO(raw), 'oversized.png')]})
+        self.assertEqual(set(upload_dir.iterdir()), before)
+        self.post('/admin/photos/upload', {'photos': [(self.image(), f'{i}.png') for i in range(9)]})
+        self.assertEqual(set(upload_dir.iterdir()), before)
+
+    def test_rotation_and_transparency(self):
+        data = io.BytesIO()
+        with Image.new('RGBA', (80, 120), (0, 128, 128, 100)) as image:
+            exif = image.getexif()
+            exif[274] = 6
+            image.save(data, 'PNG', exif=exif)
+        data.seek(0)
+        self.post('/admin/photos/upload', {'photos': (data, 'rotated.png')})
+        with app.app_context():
+            photo = db().execute('SELECT * FROM photos ORDER BY id DESC').fetchone()
+        response = self.client.get(photo['src'])
+        with Image.open(io.BytesIO(response.data)) as result:
+            self.assertEqual(result.size, (120, 80))
+            self.assertIn('A', result.getbands())
+        response.close()
+        self.post(f'/admin/photos/{photo["id"]}', {'action': 'delete'})
+
     def test_logo_and_reset(self):
         self.post('/admin/logo',{'logo':(self.image(),'logo.png')})
         with app.app_context():

@@ -8,3 +8,8 @@ node_modules
 .admin-credentials
 
 .venv
+
+backups
+artifacts
+audit
+scripts

@@ -1,0 +1,5 @@
+# Optional build override. Use on a build machine, not this 2 GB server.
+services:
+  cms:
+    build:
+      context: .

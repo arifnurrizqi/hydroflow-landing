@@ -23,7 +23,7 @@ Run checks with `.\.venv\Scripts\python -m unittest discover -s tests -v`.
 
 ```sh
 # First installation: copy .env.example to .env and choose strong secrets.
-docker compose up -d --build
+./scripts/deploy.sh
 docker compose ps
 ```
 
@@ -34,7 +34,7 @@ Initial credentials for this installation are in `.admin-credentials` (owner-rea
 ## Content
 
 - Video demo: Admin → Video Demo accepts YouTube watch, youtu.be, Shorts, live, and embed links. Saving shows a responsive YouTube iframe and a hero demo link. Clear the field to hide them. Use a public/unlisted video with embedding enabled. Existing databases receive the empty setting automatically.
-- Documentation: multi-upload JPG/PNG/WebP, up to 10 MB per photo, 20 photos / 32 MB per request. Files are re-encoded to WebP and resized to at most 1920 px. No fixed gallery photo count. Set caption, numeric order, and visibility per photo; deletion asks for confirmation.
+- Documentation: multi-upload JPG/PNG/WebP, up to 10 MB per photo, 8 photos / 16 MB per request, with a 12.5-megapixel image limit. Files are re-encoded to WebP and resized to at most 1920 px. No fixed gallery photo count. Set caption, numeric order, and visibility per photo; deletion asks for confirmation.
 - Contact: phone, WhatsApp number, email, and initial WhatsApp message update all landing-page contact links.
 - Logo: JPG/PNG/WebP uploads update header, dashboard illustration, footer, and favicon. The supplied SVG remains available as the reset default.
 - The nine initial Picsum images are placeholders; remove or hide them when real project photos are ready.
@@ -58,8 +58,50 @@ Store the backup and `.env` securely. Restore into the service's `/app/data` vol
 ## Checks
 
 ```sh
-docker compose run --rm --no-deps -v "$PWD/tests:/app/tests:ro" cms python -m unittest discover -s tests -v
+./scripts/test-arm.sh
 curl -fsS http://127.0.0.1:8091/healthz
 ```
 
 The tests use an isolated temporary database; production data is unchanged.
+
+## Armbian / ARM64 deployment
+
+This repository has been audited for the Cortex-A53 ARM64 host with approximately
+1.8 GiB RAM. `compose.yaml` explicitly selects `linux/arm64`, caps the CMS at
+256 MiB RAM, disables container swap, limits it to half a CPU and 32 processes,
+and serves one request at a time. Uploaded images are resized before EXIF rotation
+and large pixel dimensions are rejected before decoding.
+
+The existing native image supplies the pinned Python dependencies. Application
+code, templates, static assets, logo, and Gunicorn configuration are mounted
+read-only from this repository. Therefore code updates require a container
+recreation, **not an image build**. Keep these files in place while the service runs.
+
+```sh
+./scripts/preflight.py       # architecture, RAM, disk, temperature, local image
+./scripts/test-arm.sh        # offline tests, 256 MiB RAM cap
+./scripts/deploy.sh          # no build and no pull
+```
+
+`restart: on-failure:3` limits container failure retries. It does not automatically
+start the CMS after a host reboot; run `./scripts/deploy.sh` after checking host
+health. An already unhealthy host should not be redeployed until investigated.
+
+Do not download Chromium/Playwright or run frontend builds on this 2 GB server.
+`/tmp` is tmpfs (RAM-backed) and swap is zram (compressed RAM), not extra disk RAM.
+The application's browser animation and YouTube video run in visitors' browsers.
+
+When dependencies change, build an ARM64 image on a separate build machine:
+
+```sh
+# Run on a build machine, with ARM64 build support configured there.
+docker buildx build --platform linux/arm64 --load -t hydroflow-landing-cms-cms:latest .
+docker save -o hydroflow-cms-arm64.tar hydroflow-landing-cms-cms:latest
+# Transfer the tar to disk-backed storage on this server, not /tmp.
+docker load -i hydroflow-cms-arm64.tar
+./scripts/deploy.sh
+```
+
+Do not use `compose.build.yaml` on the constrained server. Runtime Compose limits
+do not automatically constrain builds or host npm/browser installer processes.
+See `audit/ARM-AUDIT.md` for measured results and remaining uncertainty.
