@@ -145,3 +145,39 @@ Google HTML verification file `google195041c754aa4836.html` is served unchanged 
 read-only Docker mount. It is also included in future images. Keep this file in
 place for ongoing ownership checks. The owner must finish verification in Google
 Search Console; serving the file alone does not confirm account ownership.
+
+## Riwayat versi, foto alat, dan lampiran
+
+Open **Admin → Riwayat versi** (`/admin/versions`) to create or edit a release.
+Each release has a unique version number, title, release date, summary, plain-text
+change notes, one optional cover photo, and draft/published status. Dates control
+sorting, not scheduled publication. Set Published only when the release is ready.
+
+Recommended workflow:
+1. Create the version as Draft and upload its cover (JPG/PNG/WebP, max 10 MiB and
+   12.5 MP). Cover processing uses the existing bounded WebP optimization.
+2. Save, then add manual book/report PDFs individually: max three per version,
+   each at most 10 MiB. Existing 16 MiB request limits are retained.
+3. Mark individual PDFs public or private. Draft releases keep all media private
+   regardless of the PDF visibility checkbox. Private PDFs require an admin login.
+4. Preview the saved release, then change its status to Published.
+
+Published releases appear at `/changelog` (10 per page), have individual pages,
+and the three most recent by date appear on the homepage. Their public page URLs
+are added to the sitemap. Empty changelog and all admin/preview pages are noindex.
+No example releases are created automatically.
+
+PDFs and release covers live under `/app/data/releases` in the existing persistent
+volume, outside `/uploads`. Every media request checks publication/access state,
+and media responses use `no-store` so shared caches do not retain private data.
+Public PDFs may be indexed by search engines; private PDFs are noindex and require
+an authenticated admin session. Previously downloaded public files cannot be
+recalled if a release later becomes private.
+
+PDF files are copied to storage without rendering, OCR, or conversion. Basic PDF
+signature/end-marker checks reject obvious non-PDF or incomplete uploads; they do
+not constitute document sanitization. Files can be opened in the visitor's browser
+or downloaded with their sanitized original filename. Deleting a release removes
+its cover and documents; replacing a cover deletes the old one. Existing backup
+instructions include these files. No additional dependencies or Docker services
+are required.

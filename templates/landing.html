@@ -81,35 +81,19 @@
         .documentation-track { display: flex; width: max-content; }
         .documentation-window.is-moving .documentation-track { animation: documentationScroll 65s linear infinite; }
         .documentation-window:hover .documentation-track { animation-play-state: paused; }
-        .documentation-grid { display: grid; flex: none; width: max(1440px, 100vw); height: 460px; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; padding-right: 12px; box-sizing: border-box; }
-        .documentation-photo { margin: 0; overflow: hidden; border-radius: 16px; background: #dce5e5; }
-        .documentation-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
-        .documentation-photo:hover img { transform: scale(1.045); }
+        .documentation-grid { --documentation-photo-height: clamp(420px, 39vw, 570px); display: flex; flex: none; align-items: flex-start; width: max-content; min-width: 100vw; gap: 14px; padding-right: 14px; box-sizing: border-box; }
+        .documentation-column { display: contents; }
+        .documentation-photo { flex: none; width: min-content; margin: 0; overflow: hidden; border: 1px solid #dce5e5; border-radius: 16px; background: #f7f9f8; }
+        .documentation-photo img { display: block; width: auto; max-width: none; height: var(--documentation-photo-height); object-fit: contain; }
+        .documentation-photo figcaption { padding: 12px 14px; color: #334155; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
         @keyframes documentationScroll { to { transform: translateX(-50%); } }
         @media (max-width: 640px) {
-            .documentation-grid { width: 1020px; height: 340px; gap: 8px; padding-right: 8px; }
-            .documentation-photo { border-radius: 10px; }
+            .documentation-grid { --documentation-photo-height: clamp(315px, 91vw, 450px); gap: 10px; padding-right: 10px; }
+            .documentation-photo { border-radius: 12px; }
         }
         @media (prefers-reduced-motion: reduce) {
             .documentation-window.is-moving { overflow-x: auto; }
             .documentation-window.is-moving .documentation-track { animation: none; }
-            .documentation-photo img { transition: none; }
-            .documentation-photo:hover img { transform: none; }
-        }
-
-        .documentation-grid { display: flex; width: max-content; min-width: 100vw; }
-        .documentation-column { display: flex; flex: 1 0 260px; flex-direction: column; gap: 12px; }
-        .documentation-column-1 { flex-basis: 330px; }
-        .documentation-column-2 { flex-basis: 230px; }
-        .documentation-column .documentation-photo { flex: 1; min-height: 0; position: relative; }
-        .documentation-column-1 .documentation-photo:first-child { flex: 1.4; }
-        .documentation-column-2 .documentation-photo:first-child { flex: .75; }
-        .documentation-photo figcaption { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 14px 12px; background: linear-gradient(transparent, rgba(7,27,46,.8)); color: white; font-size: 12px; }
-        @media (max-width: 640px) {
-            .documentation-grid { width: max-content; }
-            .documentation-column { flex-basis: 190px; gap: 8px; }
-            .documentation-column-1 { flex-basis: 250px; }
-            .documentation-column-2 { flex-basis: 170px; }
         }
     </style>
 </head>
@@ -493,6 +477,30 @@
             </div>
         </section>
 
+        {% if latest_releases %}
+        <section id="versi" class="border-t border-line bg-white py-20 lg:py-28" aria-labelledby="versions-heading">
+            <div class="mx-auto max-w-7xl px-5 lg:px-8">
+                <div class="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div><p class="text-xs font-bold uppercase tracking-[.2em] text-ocean">Perkembangan produk</p><h2 id="versions-heading" class="mt-4 font-display text-3xl font-extrabold tracking-[-.025em] text-ink sm:text-4xl">Versi terbaru Hydroflow.</h2><p class="mt-4 text-sm leading-7 text-slate-500">Pembaruan alat, catatan perubahan, dan panduan setiap rilis.</p></div>
+                    <a href="/changelog" class="shrink-0 text-sm font-bold text-ocean">Lihat semua versi →</a>
+                </div>
+                <div class="grid gap-6 md:grid-cols-3">
+                    {% for release in latest_releases %}
+                    <article class="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-paper">
+                        {% if release.cover %}<a href="{{ url_for('release_detail', release_id=release.id) }}" class="block bg-mist"><img src="{{ url_for('release_cover', release_id=release.id) }}" alt="Foto alat Hydroflow {{ release.version }}" class="h-64 w-full object-contain" loading="lazy" decoding="async"></a>{% endif %}
+                        <div class="flex flex-1 flex-col p-6">
+                            <div class="flex flex-wrap items-center gap-3 text-xs"><span class="rounded-full bg-mist px-3 py-1.5 font-bold text-ocean">{{ release.version }}</span><time datetime="{{ release.released_on }}" class="text-slate-500">{{ release.released_on }}</time></div>
+                            <h3 class="mt-5 break-words font-display text-xl font-bold text-ink"><a href="{{ url_for('release_detail', release_id=release.id) }}">{{ release.title }}</a></h3>
+                            <p class="mb-6 mt-3 flex-1 break-words text-sm leading-7 text-slate-500">{{ release.summary }}</p>
+                            <a href="{{ url_for('release_detail', release_id=release.id) }}" class="text-sm font-bold text-ocean">Pembaruan &amp; dokumen →</a>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         <section id="faq" class="border-t border-line bg-paper py-20 lg:py-28" aria-labelledby="faq-heading">
             <div class="mx-auto max-w-7xl px-5 lg:px-8">
                 <div class="grid gap-10 lg:grid-cols-[.7fr_1.3fr]">
@@ -553,6 +561,7 @@
                 <div><p class="font-display text-sm font-extrabold tracking-wider text-ink">HYDROFLOW</p><p class="text-[10px] text-slate-400">IoT Water Monitoring by Arnur Tech</p></div>
             </div>
             <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-500">
+                <a href="/changelog" class="hover:text-ink">Riwayat versi</a>
                 <a href="tel:{{ phone_href }}" class="hover:text-ink">{{ config.phone }}</a>
                 <a href="mailto:{{ config.email }}" class="hover:text-ink">{{ config.email }}</a>
             </div>
